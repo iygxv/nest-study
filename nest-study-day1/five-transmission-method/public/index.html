@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <script src="https://unpkg.com/axios/dist/axios.min.js"></script>
+    <script src="https://unpkg.com/qs@6.10.2/dist/qs.js"></script>
+</head>
+
+<body>
+    <input id="fileInput" type="file" multiple />
+    <script>
+        // urlParam 方式
+        // async function urlParam() {
+        //     const res = await axios.get('/api/role/1');
+        //     console.log(res);            
+        // }
+        // urlParam();
+
+        // query 方式
+        // async function query() {
+        //     const res = await axios.get('/api/role/find', {
+        //         params: {
+        //             name: 'suiyuan',
+        //             age: 20
+        //         }
+        //     });
+        //     console.log(res);
+        // }
+        // query();
+
+        // formUrlEncoded
+        // async function formUrlEncoded() {
+        //     const res = await axios.post('/api/role', Qs.stringify({
+        //         name: 'suiyuan',
+        //         age: 20
+        //     }), {
+        //         headers: { 'content-type': 'application/x-www-form-urlencoded' }
+        //     });
+        //     console.log(res);
+        // }
+        // formUrlEncoded();
+
+        // async function json() {
+        //     const res = await axios.post('/api/role', {
+        //         name: 'suiyuan',
+        //         age: 20
+        //     });
+        //     console.log(res);     
+        // }
+        // json();
+
+        // 文件传输 form data
+        const fileInput = document.querySelector('#fileInput');
+
+        async function formData() {
+            const data = new FormData();
+            data.set('name', 'suiyuan');
+            data.set('age', 20);
+            data.set('file1', fileInput.files[0]);
+            data.set('file2', fileInput.files[1]);
+
+            const res = await axios.post('/api/role/file', data, {
+                headers: { 'content-type': 'multipart/form-data' }
+            });
+            console.log(res);
+        }
+
+        fileInput.onchange = formData;
+    </script>
+</body>
