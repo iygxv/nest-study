@@ -9,6 +9,10 @@ import { User } from './user/entities/user.entity';
 import { RedisModule } from './redis/redis.module';
 import { EmailModule } from './email/email.module';
 import { ConfigModule, ConfigService } from '@nestjs/config';
+import { JwtModule } from '@nestjs/jwt';
+import { APP_GUARD } from '@nestjs/core';
+import { LoginGuard } from './login.guard';
+import { PermissionGuard } from './permission.guard';
 
 @Module({
   imports: [
@@ -40,11 +44,35 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
       },
       inject: [ConfigService]
     }),
+    // jwt
+    JwtModule.registerAsync({
+      global: true,
+      useFactory: (configService: ConfigService) => {
+        return {
+          secret: configService.get('jwt_secret'),
+          signOptions: {
+            expiresIn: configService.get('jwt_access_token_expires_time')
+          }
+        }
+      },
+      inject: [ConfigService]
+    }),
     UserModule,
     RedisModule,
     EmailModule,
   ],
   controllers: [AppController],
-  providers: [AppService],
+  // 全局注入
+  providers: [
+    AppService,
+    {
+      provide: APP_GUARD,
+      useClass: LoginGuard
+    },
+    {
+      provide: APP_GUARD,
+      useClass: PermissionGuard
+    },
+  ],
 })
 export class AppModule {}
