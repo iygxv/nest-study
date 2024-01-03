@@ -1,6 +1,8 @@
 import { ArgumentsHost, Catch, ExceptionFilter, HttpException, HttpStatus } from '@nestjs/common';
 import { Response } from 'express';
 
+
+// 自定义异常过滤器
 @Catch(HttpException)
 export class CustomExceptionFilter implements ExceptionFilter {
   catch(exception: HttpException, host: ArgumentsHost) {

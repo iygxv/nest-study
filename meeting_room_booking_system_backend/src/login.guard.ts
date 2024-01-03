@@ -8,6 +8,8 @@ import { Observable } from 'rxjs';
 import { Permission } from './user/entities/permission.entity';
 import { UnLoginException } from './unlogin.filter';
 
+// 登录守卫
+
 interface JwtUserData {
   userId: number;
   username: string;

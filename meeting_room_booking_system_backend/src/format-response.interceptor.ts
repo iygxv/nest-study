@@ -2,6 +2,8 @@ import { CallHandler, ExecutionContext, Injectable, NestInterceptor } from '@nes
 import { Response } from 'express';
 import { map, Observable } from 'rxjs';
 
+// 响应数据格式化
+
 @Injectable()
 export class FormatResponseInterceptor implements NestInterceptor {
   intercept(context: ExecutionContext, next: CallHandler): Observable<any> {

@@ -3,6 +3,7 @@ import { Response } from 'express';
 import { Request } from 'express';
 import { Observable, tap } from 'rxjs';
 
+// 接口记录拦截器
 @Injectable()
 export class InvokeRecordInterceptor implements NestInterceptor {
   private readonly logger = new Logger(InvokeRecordInterceptor.name);
