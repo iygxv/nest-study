@@ -1,7 +1,7 @@
 import { HttpException, HttpStatus, Inject, Injectable, Logger } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { md5 } from 'src/utils';
-import { Repository } from 'typeorm';
+import { Like, Repository } from 'typeorm';
 import { RegisterUserDto } from './dto/register-user.dto';
 import { User } from './entities/user.entity';
 import { RedisService } from 'src/redis/redis.service';
@@ -10,6 +10,8 @@ import { Permission } from './entities/permission.entity';
 import { Role } from './entities/role.entity';
 import { LoginUserDto } from './dto/login-user.dto';
 import { LoginUserVo } from './vo/login-user.vo';
+import { UpdateUserPasswordDto } from './dto/update-user-password.dto';
+import { UserListVo } from './vo/user-list.vo';
 
 @Injectable()
 export class UserService {
@@ -60,8 +62,10 @@ export class UserService {
       user2.roles = [role2];
 
       role1.permissions = [permission1, permission2];
+      console.log('role1:', role1)
       role2.permissions = [permission1];
-
+      console.log('role2:', role2)
+      
       await this.permissionRepository.save([permission1, permission2]);
       await this.roleRepository.save([role1, role2]);
       await this.userRepository.save([user1, user2]);
@@ -167,5 +171,89 @@ export class UserService {
               return arr;
           }, [])
       }
-  }
+    }
+
+    async findUserDetailById(userId: number) {
+        const user =  await this.userRepository.findOne({
+            where: {
+                id: userId
+            }
+        });
+
+        return user;
+    }
+    async updatePassword(passwordDto: UpdateUserPasswordDto) {
+        const captcha = await this.redisService.get(`update_password_captcha_${passwordDto.email}`);
+
+        if(!captcha) {
+            throw new HttpException('验证码已失效', HttpStatus.BAD_REQUEST);
+        }
+
+        if(passwordDto.captcha !== captcha) {
+            throw new HttpException('验证码不正确', HttpStatus.BAD_REQUEST);
+        }
+
+        const foundUser = await this.userRepository.findOneBy({
+          username: passwordDto.username
+        });
+        
+        if(foundUser.email !== passwordDto.email) {
+            throw new HttpException('邮箱不正确', HttpStatus.BAD_REQUEST);
+        }
+
+        foundUser.password = md5(passwordDto.password);
+            
+        try {
+          await this.userRepository.save(foundUser);
+          return '密码修改成功';
+        } catch(e) {
+          this.logger.error(e, UserService);
+          return '密码修改失败';
+        }
+    }
+
+    async findUsersByPage(pageNo: number, pageSize: number) {
+        // 条数
+        const skipCount = (pageNo - 1) * pageSize;
+
+        const [users, totalCount] = await this.userRepository.findAndCount({
+            select: ['id', 'username', 'nickName', 'email', 'phoneNumber', 'isFrozen', 'headPic', 'createTime'],
+            skip: skipCount,
+            take: pageSize
+        });
+
+        return {
+            users,
+            totalCount
+        }
+    }
+
+    async findUsers(username: string, nickName: string, email: string, pageNo: number, pageSize: number) {
+        const skipCount = (pageNo - 1) * pageSize;
+
+        const condition: Record<string, any> = {};
+
+        if(username) {
+            condition.username = Like(`%${username}%`);   
+        }
+        if(nickName) {
+            condition.nickName = Like(`%${nickName}%`); 
+        }
+        if(email) {
+            condition.email = Like(`%${email}%`); 
+        }
+
+        const [users, totalCount] = await this.userRepository.findAndCount({
+            select: ['id', 'username', 'nickName', 'email', 'phoneNumber', 'isFrozen', 'headPic', 'createTime'],
+            skip: skipCount,
+            take: pageSize,
+            where: condition
+        });
+
+        const vo = new UserListVo();
+
+        vo.users = users;
+        vo.totalCount = totalCount;
+        return vo;
+    }
 }
