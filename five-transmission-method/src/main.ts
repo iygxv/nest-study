@@ -5,6 +5,7 @@ import { join } from 'path';
 
 async function bootstrap() {
   console.log(__dirname); // 当前文件所在文件夹的绝对路径
+  console.log(join(__dirname, '', 'public'));
 
   const app = await NestFactory.create<NestExpressApplication>(AppModule);
   app.useStaticAssets(join(__dirname, '', 'public'), { prefix: '/static' });
